@@ -1,5 +1,4 @@
 import praw
-import pandas as pd
 import requests
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
@@ -26,6 +25,8 @@ def get_sentiment_score(text):
 
 def get_post_sentiment(submission):
     # Calculate sentiment score for the post
+    print("Analyzing Original Post.." + "\nTitle: " + submission.title + "\nPost Body: " + submission.selftext)
+
     post_sentiment = get_sentiment_score(submission.title + " " + submission.selftext)
     
     # Calculate sentiment scores for each comment and get average
@@ -38,6 +39,7 @@ def get_post_sentiment(submission):
         # This ensures that only actual comments are analyzed.
         if isinstance(comment, praw.models.MoreComments):
             continue
+        print("Comment: " + comment.body)
         comment_sentiment = get_sentiment_score(comment.body)
         total_comment_sentiment += comment_sentiment
         num_comments += 1
@@ -47,31 +49,32 @@ def get_post_sentiment(submission):
     
     # Weighted average: 70% post sentiment, 30% average comment sentiment
     overall_sentiment = 0.7 * post_sentiment + 0.3 * average_comment_sentiment
+
+    # Determine sentiment label based on the sentiment score
+    if overall_sentiment > 0.1:
+        sentiment_label = "Positive"
+    elif overall_sentiment < -0.1:
+        sentiment_label = "Negative"
+    else:
+        sentiment_label = "Neutral"
     
-    return overall_sentiment
+    return {
+        "title": submission.title,
+        "body": submission.selftext,
+        "comments": [comment.body for comment in submission.comments],
+        "overall_sentiment": overall_sentiment,
+        "sentiment_label": sentiment_label
+    }
 
-# URL or ID of the post you want to analyze
-post_url = "https://www.reddit.com/r/Python/comments/1bpzfcb/python_state_management/"
+def analyze_post(post_url):
+    try: 
+        submission = reddit.submission(url=post_url)
+        result = get_post_sentiment(submission)
+        result["url"] = post_url  # Add the post URL to the result
+        
+        return result
 
-# Retrieve the submission (post)
-submission = reddit.submission(url=post_url)
-
-# Get the overall sentiment score for the post
-overall_sentiment_score = get_post_sentiment(submission)
-
-# Determine sentiment label based on the sentiment score
-if overall_sentiment_score > 0.1:
-    sentiment_label = "Positive"
-elif overall_sentiment_score < -0.1:
-    sentiment_label = "Negative"
-else:
-    sentiment_label = "Neutral"
-
-# Print the overall sentiment score
-print("Overall Sentiment Score for the Post:", overall_sentiment_score)
-print("Sentiment Label:", sentiment_label)
-
-
-#TODO: Refactor code
-#TODO: add a function for the sentiment label 
-#TODO: Use pandas or create simple flask app to take a URL
+    except Exception as e:
+        return {
+            "error": str(e)
+        }

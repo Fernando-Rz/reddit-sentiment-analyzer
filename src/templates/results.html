@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reddit Sentiment Analysis Result</title>
+</head>
+<body>
+    <h1>Reddit Sentiment Analysis Result</h1>
+    <p><strong>Post URL:</strong> <a href="{{ result.url }}">{{ result.url }}</a></p>
+    <p><strong>Title:</strong> {{ result.title }}</p>
+    <p><strong>Post Body:</strong></p>
+    <p>{{ result.body }}</p>
+    <hr>
+    <h2>Comments:</h2>
+    <ul>
+        {% for comment in result.comments %}
+            <li>{{ comment }}</li>
+        {% endfor %}
+    </ul>
+
+    <p><strong>Overall Sentiment Score:</strong> {{ result.overall_sentiment }}</p>
+    <p><strong>Sentiment Label:</strong> {{result.sentiment_label}}</p>
+    
+    <a href="/">Back to Input</a>
+</body>
+</html>
